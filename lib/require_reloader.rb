@@ -20,6 +20,14 @@ module RequireReloader
       end
     end
 
+    def first_run?
+      !!@first_run
+    end
+
+    def first_run= value
+      @first_run = value
+    end
+
     # Propose to deprecate :watch_all! and reserve it for future usage.
     alias_method :watch_all!, :watch_local_gems!
 
@@ -47,10 +55,17 @@ module RequireReloader
         # based on Tim Cardenas's solution:
         # http://timcardenas.com/automatically-reload-gems-in-rails-327-on-eve
         ActionDispatch::Callbacks.to_prepare do
-          helper.remove_module_if_defined(gem)
-          $".delete_if {|s| s.include?(gem)}
-          require gem
-          opts[:callback].call(gem) if opts[:callback]
+          # Do nothing on the first run. Reload on subsequent requests.
+          unless RequireReloader.first_run?
+            helper.remove_module_if_defined(gem)
+            $".delete_if {|s| s.include?(gem)}
+            require gem
+            opts[:callback].call(gem) if opts[:callback]
+          end
+        end
+        ActionDispatch::Callbacks.to_cleanup do
+          # First run is over when cleanup starts.
+          RequireReloader.first_run = false
         end
       end
     end
@@ -71,4 +86,6 @@ module RequireReloader
         map{|s| {:name => s.name, :path => s.source.path.to_s} }
     end
   end
+
+  self.first_run = true
 end
