@@ -14,18 +14,10 @@ module RequireReloader
     def watch_local_gems!
       local_gems.each do |gem|
         # never reload itself for now, causing error raised in integration test
-        next if gem[:name] == 'require_reloader'
+        next if gem.name == 'require_reloader'
 
-        watch gem[:name], :path => gem[:path]
+        watch gem.name, :path => gem.source.path.to_s, :module_name => gem.metadata['module_name']
       end
-    end
-
-    def first_run?
-      !!@first_run
-    end
-
-    def first_run= value
-      @first_run = value
     end
 
     # Propose to deprecate :watch_all! and reserve it for future usage.
@@ -54,18 +46,15 @@ module RequireReloader
 
         # based on Tim Cardenas's solution:
         # http://timcardenas.com/automatically-reload-gems-in-rails-327-on-eve
-        ActionDispatch::Callbacks.to_prepare do
-          # Do nothing on the first run. Reload on subsequent requests.
-          unless RequireReloader.first_run?
-            helper.remove_module_if_defined(gem)
-            $".delete_if {|s| s.include?(gem)}
-            require gem
-            opts[:callback].call(gem) if opts[:callback]
+        helper.to_prepare do
+          if opts[:module_name]
+            helper.remove_module_if_defined(opts[:module_name])
+          else
+            helper.remove_gem_module_if_defined(gem)
           end
-        end
-        ActionDispatch::Callbacks.to_cleanup do
-          # First run is over when cleanup starts.
-          RequireReloader.first_run = false
+          $".delete_if {|s| s.include?(gem)}
+          require gem
+          opts[:callback].call(gem) if opts[:callback]
         end
       end
     end
@@ -74,18 +63,15 @@ module RequireReloader
 
     def expanded_gem_path(gem, preferred_path)
       return File.expand_path(preferred_path) if preferred_path
-      local_gem = local_gems.find {|g| g[:name] == gem}
-      local_gem ? File.expand_path(local_gem[:path]) : false
+      local_gem = local_gems.find {|g| g.name == gem}
+      local_gem ? File.expand_path(local_gem.source.path.to_s) : false
     end
 
     # returns only local gems, local git repo
     def local_gems
       Bundler.definition.specs.
         select{|s| s.source.is_a?(Bundler::Source::Path) }.
-        delete_if{|s| s.source.is_a?(Bundler::Source::Git) && !s.source.send(:local?) }.
-        map{|s| {:name => s.name, :path => s.source.path.to_s} }
+        delete_if{|s| s.source.is_a?(Bundler::Source::Git) && !s.source.send(:local?) }
     end
   end
-
-  self.first_run = true
 end

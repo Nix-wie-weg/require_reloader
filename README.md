@@ -17,7 +17,7 @@ Given a `Gemfile`
 
     # Gemfile
     gem 'my_gem',  :path => '~/work/my_gem'
-    gem 'my_gem2', :path => '~/fun/my_gem2'
+    gem 'my_gem2', :path => '~/fun/my_gem2', :module_name => 'MYGEM2'
 
 To reload all **local gems** (the ones with `:path` attribute,
 or using [local git repo](http://gembundler.com/v1.2/git.html#local)):
@@ -38,6 +38,10 @@ You can also **reload a `.rb` file in `lib`** or any directory:
     RequireReloader.watch :foo, :path => 'app/models'
 
 The `:path` option is *optional*. In **Rails 3.2**, `:path` value is added into `watchable_dirs`. Rails 3.1 and 3.0 ignore this value.
+
+The `:module_name` option is *optional*. By default, it is assumed that the top-level module is a CamelCase version of the gem name.
+If this is not the case, you can pass this option, a String. This value will also be picked up if included in the metadata of the gemspec,
+as in `spec.metadata = {'module_name' => 'MYMOD'}`.
 
 RequireReloader adds `lib` into `watchable_dirs`. So, specify `:path`
 only if it is not specified in `Gemfile` and the file is located in other directory.
@@ -71,9 +75,12 @@ This gem is forked from Colin Young's [gem_reloader](https://github.com/colinyou
 
 ### Contributors
 - @sven-winkler: trigger callback after gem reloaded (issue #2)
+- @aceofspades: support gem metadata :module_name in Gemfile (issue #4)
 
 ## Changelog
-- v0.1.6: RequireReloader::watch accepts :callback, runs it after gem reloaded ([pull request](https://github.com/teohm/require_reloader/pull/2) from @sven-winkler). 
+- v0.2.1: Add Rails 5.1 support ([pull request](https://github.com/teohm/require_reloader/pull/7) from @kibenimatik)
+- v0.2.0: Support module_name option/spec-metadata
+- v0.1.6: RequireReloader::watch accepts :callback, runs it after gem reloaded ([pull request](https://github.com/teohm/require_reloader/pull/2) from @sven-winkler).
 - v0.1.5: properly guess top-level module name based on gem name
 pattern, only watch git repo if it's local.
 - v0.1.4: remove 'vendor/gems' from watchable_dirs & autoload_paths, as local gem path is already specified in Gemfile.

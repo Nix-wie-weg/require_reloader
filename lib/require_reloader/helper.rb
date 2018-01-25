@@ -50,9 +50,13 @@ module RequireReloader
   class Helper
     include ActionPackInfectorMethods
 
-    def remove_module_if_defined(gem_name)
-      full_name = full_qualified_name(gem_name)
-      remove_module(full_name) if module_defined?(full_name)
+    def remove_gem_module_if_defined(gem_name)
+      mod_name = full_qualified_name(gem_name)
+      remove_module_if_defined(mod_name)
+    end
+
+    def remove_module_if_defined(mod_name)
+      remove_module(mod_name) if module_defined?(mod_name)
     end
 
     def module_defined?(full_name)
@@ -75,6 +79,13 @@ module RequireReloader
       str.split("_").map{|token| token.capitalize }.join("")
     end
 
+    def to_prepare(&block)
+      if Rails::VERSION::MAJOR == 5
+        ActiveSupport::Reloader.to_prepare(&block)
+      else
+        ActionDispatch::Callbacks.to_prepare(&block)
+      end
+    end
   end
 
 end
