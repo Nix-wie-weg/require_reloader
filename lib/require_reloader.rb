@@ -37,6 +37,9 @@ module RequireReloader
       watchable_exts = opts[:exts] ? Array(opts[:exts]) : [:rb]
       helper         = Helper.new
 
+      # If it's not watchable, skip everything
+      return unless watchable_dir
+
       app = Object.const_get(Rails.application.class.parent_name)
       app::Application.configure do
 
