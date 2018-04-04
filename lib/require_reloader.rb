@@ -50,22 +50,14 @@ module RequireReloader
         # based on Tim Cardenas's solution:
         # http://timcardenas.com/automatically-reload-gems-in-rails-327-on-eve
         helper.to_prepare do
-          mtime =
-            Dir["#{watchable_dir}/**/*.rb"].map { |f| File.stat(f).mtime }.max
-
-          if helper.mtime.nil? || helper.mtime >= mtime
-            helper.mtime = mtime
+          if opts[:module_name]
+            helper.remove_module_if_defined(opts[:module_name])
           else
-            helper.mtime = mtime
-            if opts[:module_name]
-              helper.remove_module_if_defined(opts[:module_name])
-            else
-              helper.remove_gem_module_if_defined(gem)
-            end
-            $".delete_if {|s| s.include?(gem)}
-            require gem
-            opts[:callback].call(gem) if opts[:callback]
+            helper.remove_gem_module_if_defined(gem)
           end
+          $".delete_if {|s| s.include?(gem)}
+          require gem
+          opts[:callback].call(gem) if opts[:callback]
         end
       end
     end

@@ -49,7 +49,6 @@ module RequireReloader
 
   class Helper
     include ActionPackInfectorMethods
-    attr_accessor :mtime
 
     def remove_gem_module_if_defined(gem_name)
       mod_name = full_qualified_name(gem_name)
