@@ -55,7 +55,7 @@ module RequireReloader
           else
             helper.remove_gem_module_if_defined(gem)
           end
-          $".delete_if {|s| s.include?(gem)}
+          $LOADED_FEATURES.reject! { |s| s.include?(gem) }
           require gem
           opts[:callback].call(gem) if opts[:callback]
         end
